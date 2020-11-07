@@ -23,9 +23,9 @@ async def async_setup_platform(hass,
                                config,
                                async_add_entities,
                                discovery_info=None):
-    """Set up the Nest climate device."""
     api = hass.data[DOMAIN]['api']
 
+    """Set up the Nest climate devices."""
     temperature_sensors = []
     _LOGGER.info("Adding temperature sensors")
     for sensor in api['temperature_sensors']:
@@ -34,6 +34,7 @@ async def async_setup_platform(hass,
 
     async_add_entities(temperature_sensors)
 
+    """Set up the Nest Protect devices."""
     protect_sensors = []
     _LOGGER.info("Adding protect sensors")
     for sensor in api['protects']:
@@ -43,6 +44,12 @@ async def async_setup_platform(hass,
 
     async_add_entities(protect_sensors)
 
+    """Set up the Nest manager device."""
+    nest_manager = []
+    _LOGGER.info("Adding nest sensor manager")
+    nest_manager.append(NestManager("nestmanager", "nestmanager", api))
+
+    async_add_entities(nest_manager)     
 
 class NestTemperatureSensor(Entity):
     """Implementation of the Nest Temperature Sensor."""
@@ -81,7 +88,8 @@ class NestTemperatureSensor(Entity):
 
     def update(self):
         """Get the latest data from the DHT and updates the states."""
-        self.device.update()
+        pass
+#        self.device.update()
 
     @property
     def device_state_attributes(self):
@@ -120,4 +128,34 @@ class NestProtectSensor(Entity):
 
     def update(self):
         """Get the latest data from the Protect and updates the states."""
+        pass
+#        self.device.update()
+
+class NestManager(Entity):
+    """Implementation of the Nest Sensor Manager for web queries."""
+
+    def __init__(self, device_id, sensor_type, api):
+        """Initialize the sensor."""
+        self._name = "Nest Sensor Manager"
+        self.device_id = device_id
+        self._sensor_type = sensor_type
+        self.device = api
+
+    @property
+    def unique_id(self):
+        """Return an unique ID."""
+        return f"{self.device_id}_{self._sensor_type}"
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return f'{self._sensor_type}'
+
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return 'Ok'
+
+    def update(self):
+        """Get the latest data from Nest and updates the states."""
         self.device.update()
