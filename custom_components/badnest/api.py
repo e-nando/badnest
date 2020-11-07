@@ -149,7 +149,7 @@ class NestAPI():
             _LOGGER.error(e)
 
         try:
-             access_token = r.json()['access_token']
+            access_token = r.json()['access_token']
         except KeyError:
             _LOGGER.error(f"{r.json()['error']}: {r.json()['detail']}")
             _LOGGER.error("Invalid cookie or issue_token. Please see:")
