@@ -57,29 +57,26 @@ KNOWN_BUCKET_TYPES = [
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class Decorators(object):
     @classmethod
     def refresh_login(self, func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                func(*args, **kwargs)
+                return func(*args, **kwargs)
             except AuthorizationRequired:
                 _LOGGER.debug("Refreshing login info")
                 args[0].login()
-                func(*args, **kwargs)
+                return func(*args, **kwargs)
             except (HTTPError, RetryError) as e:
                 _LOGGER.error(f"Upstream error: {e}")
             except RequestException as e:
                 _LOGGER.error(e)
-            return func(*args, **kwargs)
+            return None
         return wrapper
-
 
 class AuthorizationRequired(Exception):
     pass
-
 
 class NestAPI():
     def __init__(self,
@@ -111,7 +108,6 @@ class NestAPI():
         self.thermostats = set()
         self.temperature_sensors = set()
         self.protects = set()
-
         self.login()
         self._get_devices()
         self.update()
@@ -153,7 +149,7 @@ class NestAPI():
             _LOGGER.error(e)
 
         try:
-            access_token = r.json()['access_token']
+             access_token = r.json()['access_token']
         except KeyError:
             _LOGGER.error(f"{r.json()['error']}: {r.json()['detail']}")
             _LOGGER.error("Invalid cookie or issue_token. Please see:")
@@ -433,8 +429,9 @@ class NestAPI():
                     }
                 ]            }
         )
+
         self._check_request(r)
-        
+
     @Decorators.refresh_login
     def thermostat_set_temperature(self, device_id, temp, temp_high=None):
         if device_id not in self.thermostats:
@@ -460,6 +457,7 @@ class NestAPI():
                 ]
             }
         )
+
         self._check_request(r)
 
     @Decorators.refresh_login
